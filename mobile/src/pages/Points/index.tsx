@@ -94,6 +94,7 @@ const Points: React.FC = () => {
       });
 
       setPoints(response.data);
+      console.log(response.data);
     }
 
     loadPoints();
