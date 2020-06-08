@@ -51,52 +51,59 @@ class PointsController {
   }
 
   async create(req: Request, res: Response) {
-    const {
-      name,
-      email,
-      whatsapp,
-      latitude,
-      longitude,
-      city,
-      uf,
-      items,
-    } = req.body;
-  
-    const trx = await knex.transaction();
+    try {
+      const {
+        name,
+        email,
+        whatsapp,
+        latitude,
+        longitude,
+        city,
+        uf,
+        items,
+      } = req.body;
     
-    const point = {
-      image: req.file.filename,
-      name,
-      email,
-      whatsapp,
-      latitude,
-      longitude,
-      city,
-      uf,
+      const trx = await knex.transaction();
+      
+      const point = {
+        image: req.file.filename,
+        name,
+        email,
+        whatsapp,
+        latitude,
+        longitude,
+        city,
+        uf,
+      }
+  
+      const insertedIds = await trx('points').insert(point);
+    
+      const point_id = insertedIds[0];
+    
+      const pointItems = items
+        .split(',')
+        .map((item: string) => Number(item.trim()))
+        .map((item_id: Number) => {
+          return {
+            item_id,
+            point_id,
+          };
+      });
+    
+      await trx('point_items').insert(pointItems);
+      
+      await trx.commit();
+  
+      return res.status(201).json({
+        id: point_id,
+        ...point,
+      });
+    } catch (error) {
+        res.json({
+          error: true,
+          message: error.message,
+        });
     }
-
-    const insertedIds = await trx('points').insert(point);
-  
-    const point_id = insertedIds[0];
-  
-    const pointItems = items
-      .split(',')
-      .map((item: string) => Number(item.trim()))
-      .map((item_id: Number) => {
-        return {
-          item_id,
-          point_id,
-        };
-    });
-  
-    await trx('point_items').insert(pointItems);
-    
-    await trx.commit();
-
-    return res.status(201).json({
-      id: point_id,
-      ...point,
-    });
   }
 }
 
